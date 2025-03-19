@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مسابقة رسلان و المهرة الرمضانية</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-size: cover;
+            background-position: center;
+            color: black;
+            text-align: center;
+            overflow-x: hidden;
+        }
+        h1 {
+            font-size: 3em;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .squares-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 15px;
+            justify-content: center;
+            margin: 20px;
+            padding: 10px;
+        }
+        .square {
+            width: 100%;
+            height: 100px;
+            background-color: #1995AD;
+            color: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+        .square:hover {
+            transform: scale(1.05);
+        }
+        .square.used {
+            background-color: #A1D6E2;
+            color: transparent;
+            cursor: not-allowed;
+        }
+        .result-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .team-result {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .score-box {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .score-btn {
+            background-color: #1995AD;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .question-window, .answer-window, .team-selection-window, .timer-alert {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .question-content, .answer-content, .team-selection-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 90%;
+            width: 400px; /* حجم النافذة */
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        #questionImage, #answerImage {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+            object-fit: contain; /* ضمان ظهور الصور بشكل واضح */
+        }
+        .close-btn {
+            background-color: #1995AD;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .answer-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .correct-btn {
+            background-color: green;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .wrong-btn {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .surprise-btn {
+            background-color: orange;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        /* تنبيه انتهاء الوقت */
+        .timer-alert {
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            font-size: 1.5em;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        /* خلفيات مختلفة للأجهزة */
+        @media (min-width: 768px) {
+            body {
+                background-image: url('backgrounds/large-background.png'); /* خلفية للأجهزة الكبيرة */
+            }
+        }
+        @media (max-width: 768px) {
+            body {
+                background-image: url('backgrounds/small-background.png'); /* خلفية للأجهزة الصغيرة */
+            }
+        }
+
+        /* استعلامات وسائط للأجهزة الصغيرة */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            .square {
+                height: 80px;
+                font-size: 1.2em;
+            }
+            .question-content, .answer-content, .team-selection-content {
+                width: 90%; /* زيادة عرض النافذة على الأجهزة الصغيرة */
+                padding: 15px;
+            }
+            #questionImage, #answerImage {
+                max-width: 100%;
+                height: auto;
+            }
+        }
+
+        /* استعلامات وسائط للأجهزة الكبيرة */
+        @media (min-width: 1200px) {
+            .squares-container {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            }
+            .square {
+                height: 120px;
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>مسابقة رسلان و المهرة الرمضانية</h1>
+    <div class="squares-container" id="squaresContainer"></div>
+    <div class="result-container">
+        <div class="team-result">
+            <span>الفريق الأزرق:</span>
+            <div class="score-box">
+                <button class="score-btn" onclick="updateScore('blue', -1)">-</button>
+                <span id="blueScore">0</span>
+                <button class="score-btn" onclick="updateScore('blue', 1)">+</button>
+            </div>
+        </div>
+        <div class="team-result">
+            <span>الفريق الأصفر:</span>
+            <div class="score-box">
+                <button class="score-btn" onclick="updateScore('yellow', -1)">-</button>
+                <span id="yellowScore">0</span>
+                <button class="score-btn" onclick="updateScore('yellow', 1)">+</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question Window -->
+    <div class="question-window" id="questionWindow">
+        <div class="question-content">
+            <img id="questionImage" src="" alt="السؤال">
+            <p>الوقت المتبقي: <span id="timer">20</span> ثانية</p>
+            <button class="close-btn" onclick="openAnswer()">اضغط للإجابة</button>
+        </div>
+    </div>
+
+    <!-- Answer Window -->
+    <div class="answer-window" id="answerWindow">
+        <div class="answer-content">
+            <img id="answerImage" src="" alt="الإجابة">
+            <div class="answer-buttons">
+                <button class="correct-btn" onclick="showTeamSelection(true)">إجابة صحيحة</button>
+                <button class="wrong-btn" onclick="showTeamSelection(false)">إجابة خاطئة</button>
+                <button class="surprise-btn" onclick="showTeamSelection(null)">مفاجأة</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Selection Window -->
+    <div class="team-selection-window" id="teamSelectionWindow">
+        <div class="team-selection-content">
+            <p>اختر الفريق:</p>
+            <button class="team-btn" onclick="handleTeamSelection('blue')">الفريق الأزرق</button>
+            <button class="team-btn" onclick="handleTeamSelection('yellow')">الفريق الأصفر</button>
+        </div>
+    </div>
+
+    <!-- Timer Alert -->
+    <div class="timer-alert" id="timerAlert">
+        <p>انتهى الوقت!</p>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="correctSound" src="sounds/correct.mp3"></audio>
+    <audio id="wrongSound" src="sounds/wrong.mp3"></audio>
+    <audio id="surpriseSound" src="sounds/surprise.mp3"></audio>
+
+    <script>
+        const squares = [];
+        const questions = [
+    { question: 'images/q1.png', answer: 'images/a1.png' },
+    { question: 'images/q2.png', answer: 'images/a2.png' },
+    { question: 'images/q3.png', answer: 'images/a3.png' },
+    { question: 'images/q4.png', answer: 'images/a4.png' },
+    { question: 'images/q5.png', answer: 'images/a5.png' },
+    { question: 'images/q6.png', answer: 'images/a6.png' },
+    { question: 'images/q7.png', answer: 'images/a7.png' },
+    { question: 'images/q8.png', answer: 'images/a8.png' },
+    { question: 'images/q9.png', answer: 'images/a9.png' },
+    { question: 'images/q10.png', answer: 'images/a10.png' },
+    { question: 'images/q11.png', answer: 'images/a11.png' },
+    { question: 'images/q12.png', answer: 'images/a12.png' },
+    { question: 'images/q13.png', answer: 'images/a13.png' },
+    { question: 'images/q14.png', answer: 'images/a14.png' },
+    { question: 'images/q15.png', answer: 'images/a15.png' },
+    { question: 'images/q16.png', answer: 'images/a16.png' },
+    { question: 'images/q17.png', answer: 'images/a17.png' },
+    { question: 'images/q18.png', answer: 'images/a18.png' },
+    { question: 'images/q19.png', answer: 'images/a19.png' },
+    { question: 'images/q20.png', answer: 'images/a20.png' }
+];
+
+        let currentSquareIndex = null;
+        let currentAction = null;
+        let timerInterval;
+
+        function createSquares() {
+            const container = document.getElementById('squaresContainer');
+            for (let i = 1; i <= 20; i++) {
+                const square = document.createElement('div');
+                square.className = 'square';
+                square.textContent = i;
+                square.onclick = () => selectSquare(i - 1);
+                container.appendChild(square);
+                squares.push(square);
+            }
+        }
+
+        function selectSquare(index) {
+            if (!squares[index].classList.contains('used')) {
+                currentSquareIndex = index;
+                squares[index].classList.add('used');
+                openQuestion(questions[index]?.question || '');
+                startTimer();
+            }
+        }
+
+        function openQuestion(imageSrc) {
+            const questionWindow = document.getElementById('questionWindow');
+            const questionImage = document.getElementById('questionImage');
+            questionImage.src = imageSrc;
+            questionWindow.style.display = 'flex';
+        }
+
+        function openAnswer() {
+            const answerWindow = document.getElementById('answerWindow');
+            const answerImage = document.getElementById('answerImage');
+            answerImage.src = questions[currentSquareIndex]?.answer || '';
+            document.getElementById('questionWindow').style.display = 'none';
+            answerWindow.style.display = 'flex';
+            resetTimer();
+        }
+
+        function closeAnswer() {
+            document.getElementById('answerWindow').style.display = 'none';
+            resetTimer();
+        }
+
+        function showTeamSelection(action) {
+            currentAction = action; // تخزين الإجراء الحالي (صحيح، خاطئ، مفاجأة)
+            const teamSelectionWindow = document.getElementById('teamSelectionWindow');
+            teamSelectionWindow.style.display = 'flex';
+        }
+
+        function handleTeamSelection(team) {
+            const correctSound = document.getElementById('correctSound');
+            const wrongSound = document.getElementById('wrongSound');
+            const surpriseSound = document.getElementById('surpriseSound');
+
+            if (currentAction === true) {
+                updateScore(team, 10); // زيادة 10 نقاط للفريق المختار
+                if (correctSound) {
+                    correctSound.play().catch(error => {
+                        console.error("خطأ في تشغيل صوت الإجابة الصحيحة:", error);
+                    });
+                }
+            } else if (currentAction === false) {
+                if (wrongSound) {
+                    wrongSound.play().catch(error => {
+                        console.error("خطأ في تشغيل صوت الإجابة الخاطئة:", error);
+                    });
+                }
+            } else if (currentAction === null) {
+                alert("مفاجأة! لا توجد نقاط مضافة أو مخصومة.");
+                if (surpriseSound) {
+                    surpriseSound.play().catch(error => {
+                        console.error("خطأ في تشغيل صوت المفاجأة:", error);
+                    });
+                }
+            }
+
+            document.getElementById('teamSelectionWindow').style.display = 'none';
+            closeAnswer();
+        }
+
+        let blueScore = 0;
+        let yellowScore = 0;
+
+        function updateScore(team, value) {
+            if (team === 'blue') {
+                blueScore = Math.max(-100, Math.min(100, blueScore + value));
+                document.getElementById('blueScore').textContent = blueScore;
+            } else if (team === 'yellow') {
+                yellowScore = Math.max(-100, Math.min(100, yellowScore + value));
+                document.getElementById('yellowScore').textContent = yellowScore;
+            }
+        }
+
+        function startTimer() {
+            let timeLeft = 20;
+            const timerElement = document.getElementById('timer');
+            timerElement.textContent = timeLeft;
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerElement.textContent = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    const timerAlert = document.getElementById('timerAlert');
+                    timerAlert.style.display = 'flex'; // عرض التنبيه
+                    setTimeout(() => {
+                        timerAlert.style.display = 'none'; // إخفاء التنبيه بعد ثانيتين
+                        closeAnswer(); // إغلاق نافذة الإجابة
+                    }, 2000);
+                }
+            }, 1000);
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            document.getElementById('timer').textContent = 15;
+        }
+
+        createSquares();
+    </script>
+</body>
+</html>
